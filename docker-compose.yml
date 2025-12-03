@@ -1,0 +1,36 @@
+services:
+  web:
+    build: .
+    container_name: ecommerce_web
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py runserver 0.0.0.0:8000"
+    ports:
+      - "8000:8000"
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_SETTINGS_MODULE=config.settings
+    depends_on:
+      - redis
+    volumes:
+      - ./db.sqlite3:/app/db.sqlite3   
+
+  worker:
+    build: .
+    container_name: ecommerce_worker
+    command: celery -A config worker -l info
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - DJANGO_SETTINGS_MODULE=config.settings
+    depends_on:
+      - redis
+    volumes:
+      - ./db.sqlite3:/app/db.sqlite3  
+
+  redis:
+    image: redis:7
+    container_name: ecommerce_redis
+    ports:
+      - "6379:6379"
