@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecommerce-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ecommerce-worker
+  template:
+    metadata:
+      labels:
+        app: ecommerce-worker
+    spec:
+      containers:
+        - name: worker
+          image: IMAGE_URL_HERE   # same image as web
+          command: ["sh", "-c"]
+          args:
+            - "celery -A config worker -l info"
+          env:
+            - name: CELERY_BROKER_URL
+              value: "redis://redis:6379/0"
+            - name: CELERY_RESULT_BACKEND
+              value: "redis://redis:6379/1"
+            - name: DJANGO_SETTINGS_MODULE
+              value: "config.settings"
